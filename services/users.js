@@ -5,22 +5,26 @@ class UsersService {
     this.collection = "users";
     this.mongoDB = new MongoLib();
   }
-  async getGenres() {
+  async getUsers() {
     const users = await this.mongoDB.getAll(this.collection);
     return users;
   }
-  async getUser({ userId }) {
-    const user = await this.mongoDB.get(this.collection, userId);
+  async getUser({ userID }) {
+    const user = await this.mongoDB.get(this.collection, userID);
+    return user;
+  }
+  async validateUser({ email, password }) {
+    const user = await this.mongoDB.validate(this.collection, email, password);
     return user;
   }
   async createUser(user) {
     const createdUserId = await this.mongoDB.create(this.collection, user);
     return createdUserId;
   }
-  async updateUser({ userId, user }) {
+  async updateUser({ userID, user }) {
     const updatedUserId = await this.mongoDB.update(
       this.collection,
-      userId,
+      userID,
       user
     );
 
