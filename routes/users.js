@@ -1,10 +1,11 @@
 const express = require("express");
+const TokensService = require("../services/tokens");
 const UsersService = require("../services/users");
 
 function UsersApi(app) {
   const router = express.Router();
   const usersService = new UsersService();
-
+  const tokensService = new TokensService();
   app.use("/api/users/", router);
 
   //GET all users
@@ -69,7 +70,6 @@ function UsersApi(app) {
     try {
       const { body } = req;
       const { email, password } = body;
-      console.log(email, password);
       if (!email || !password) {
         res.status(400).json({
           status: 1,
@@ -80,13 +80,14 @@ function UsersApi(app) {
       if (!user) {
         res.status(404).json({
           status: 30,
-          msg: "email pr password invalid",
+          msg: "email or password invalid",
         });
       }
+      const token_id = await tokensService.createToken(user._id);
       res.status(201).json({
         status: 0,
         msg: "Login succesfully",
-        token: "somerandomtoken",
+        token: Buffer.from(token_id.toString()).toString("base64"),
         user,
       });
     } catch (error) {
