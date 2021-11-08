@@ -10,7 +10,7 @@ class TokensService {
     return tokens;
   }
   async getToken({ userID }) {
-    const token = await this.mongoDB.getToken(this.collection, userID);
+    const token = await this.mongoDB.getByUserId(this.collection, userID);
     return token;
   }
   async createToken(user_id) {
