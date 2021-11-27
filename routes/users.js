@@ -1,6 +1,5 @@
 const express = require("express");
-const TokensService = require("../services/tokens");
-const UsersService = require("../services/users");
+const { TokensService, UsersService } = require("../services");
 
 function UsersApi(app) {
   const router = express.Router();

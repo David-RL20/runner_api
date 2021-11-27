@@ -1,19 +1,13 @@
 const express = require("express");
 const { config } = require("./config/");
-// const books = require("./routes/books");
-// const authors = require("./routes/authors");
-const users = require("./routes/users");
+const { UsersApi, StatsApi } = require("./routes");
 const app = express();
 
-//It can undestand json
+//It can understand json
 app.use(express.json());
 
-//Genres
-users(app);
-// //Authors
-// authors(app);
-// //Books
-// books(app);
+UsersApi(app);
+StatsApi(app);
 
 app.listen(config.port, (err) => {
   if (err) console.log(err);
