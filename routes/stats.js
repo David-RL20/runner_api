@@ -125,8 +125,69 @@ function StatsApi(app) {
   });
 
   //Upload the new stats from a user
+  //user_id as header
   //Received token as header
-  router.post("/", async (req, res, next) => {});
+  router.post("/", async (req, res, next) => {
+    try {
+      if (!req.body) {
+        res.status(500).json({
+          status: "10",
+          msg: "This enpoint should received a body msg",
+        });
+      }
+
+      if (!req.headers.user_id) {
+        res.status(404).json({
+          status: "1",
+          msg: "Missing Parameters (user_id)",
+        });
+      }
+      const query_params = {
+        userID: req.headers.user_id,
+      };
+      //get user stats
+      let stats = await statsService.getStats(query_params);
+
+      if (stats) {
+        stats.stats.push(req.body);
+        const update_params = {
+          _id: stats._id.toString(),
+          stats: {
+            ...stats,
+          },
+        };
+        //remove _id to avoid errors
+        delete stats._id;
+        const a = await statsService.updateStats(update_params);
+        res.status(200).json({
+          status: "0",
+          msg: "Stat added succesfully",
+        });
+      } else {
+        let new_stat = {
+          user_id: req.headers.user_id,
+          stats: [req.body],
+        };
+        const res_mongo = await statsService.createStats(new_stat);
+        if (res_mongo) {
+          res.status(200).json({
+            status: "0",
+            msg: "New stat added succesfully",
+          });
+        } else {
+          res.status(500).json({
+            status: "5",
+            msg: "Internal Server Error",
+          });
+        }
+      }
+    } catch (error) {
+      res.status(404).json({
+        status: "5",
+        msg: error.toString(),
+      });
+    }
+  });
 }
 
 module.exports = StatsApi;

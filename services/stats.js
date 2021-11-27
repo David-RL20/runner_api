@@ -25,6 +25,15 @@ class StatsService {
     const user = await this.mongoDB.get(this.collection, userID);
     return user;
   }
+  async updateStats({ _id, stats }) {
+    const updatedUserId = await this.mongoDB.update(
+      this.collection,
+      _id,
+      stats
+    );
+
+    return updatedUserId;
+  }
   async createStats(stats) {
     const createdUserId = await this.mongoDB.create(this.collection, stats);
     return createdUserId;
