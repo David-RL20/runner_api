@@ -9,9 +9,13 @@ class StatsService {
   //   const users = await this.mongoDB.getAll(this.collection);
   //   return users;
   // }
+  async getAllStats() {
+    const stats = await this.mongoDB.getAll(this.collection);
+    return stats;
+  }
   async getStats({ userID }) {
-    const user = await this.mongoDB.getByUserId(this.collection, userID);
-    return user;
+    const stats = await this.mongoDB.getStatsByUserId(this.collection, userID);
+    return stats;
   }
   async getStatsByWeek({ userID }) {
     const user = await this.mongoDB.get(this.collection, userID);
