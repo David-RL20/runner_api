@@ -249,7 +249,6 @@ function StatsApi(app) {
           time_running_avg_session: null,
           share: true,
         });
-        console.log(stats);
         const update_params = {
           _id: stats._id.toString(),
           firebase_id: stats.firebase_id || req.headers.user_id,
@@ -265,9 +264,32 @@ function StatsApi(app) {
           msg: "Stat added succesfully",
         });
       } else {
+        //adding first stat to user
         let new_stat = {
           firebase_id: req.headers.user_id,
-          stats: [req.body],
+          stats: [
+            {
+              session: 1,
+              time: moment.now(),
+              distance: null,
+              speed: null,
+              route: {
+                start: {
+                  latitude: req.body.latitude,
+                  longitude: req.body.longitude,
+                  time: moment.now(),
+                },
+                end: {
+                  latitude: null,
+                  longitude: null,
+                },
+              },
+              register_date: user.register_date,
+              running_avg_session: null,
+              time_running_avg_session: null,
+              share: true,
+            },
+          ],
         };
         const res_mongo = await statsService.createStats(new_stat);
         if (res_mongo) {
@@ -319,8 +341,14 @@ function StatsApi(app) {
       //get user stats
       let stats = await statsService.getStats(query_params);
 
-      if (stats && !updated_stat.route.end) {
+      if (stats) {
         let updated_stat = stats.stats[stats.stats.length - 1];
+        if (updated_stat.route.end.latitude) {
+          res.status(500).json({
+            status: "502",
+            msg: "Record not found to update",
+          });
+        }
         const distance = geolib.getDistance(
           {
             latitude: updated_stat.route.start.latitude,
