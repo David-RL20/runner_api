@@ -218,6 +218,9 @@ function StatsApi(app) {
       const query_params = {
         firebase_id: req.headers.user_id,
       };
+      const query_stats = {
+        userID: req.headers.user_id,
+      };
 
       //get user
       const user = await usersService.getUser(query_params);
@@ -229,7 +232,7 @@ function StatsApi(app) {
         });
       }
       //get user stats
-      let stats = await statsService.getStats(query_params);
+      let stats = await statsService.getStats(query_stats);
 
       if (stats) {
         stats.stats.push({
@@ -243,6 +246,10 @@ function StatsApi(app) {
               longitude: req.body.longitude,
               time: moment.now(),
             },
+            end: {
+              latitude: null,
+              longitude: null,
+            },
           },
           register_date: user.register_date,
           running_avg_session: null,
@@ -251,7 +258,7 @@ function StatsApi(app) {
         });
         const update_params = {
           _id: stats._id.toString(),
-          firebase_id: stats.firebase_id || req.headers.user_id,
+          firebase_id: stats.firebase_id,
           stats: {
             ...stats,
           },
@@ -346,7 +353,7 @@ function StatsApi(app) {
         if (updated_stat.route.end.latitude) {
           res.status(500).json({
             status: "502",
-            msg: "Record not found to update",
+            msg: "This record already has latitude registered",
           });
         }
         const distance = geolib.getDistance(
