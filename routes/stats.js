@@ -377,8 +377,6 @@ function StatsApi(app) {
         };
         stats.stats.pop();
         stats.stats.push(updated_stat);
-
-        console.log(stats);
         const update_params = {
           _id: stats._id.toString(),
           stats: {
