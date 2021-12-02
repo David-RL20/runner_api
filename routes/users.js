@@ -32,7 +32,7 @@ function UsersApi(app) {
           message: "missing parameter expected userID",
         });
       }
-      const user = await usersService.getUser({ userID });
+      const user = await usersService.getUser({ firebase_id: userID });
       if (user) {
         res.status(200).json({
           status: 0,

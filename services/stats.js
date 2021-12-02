@@ -14,7 +14,9 @@ class StatsService {
     return stats;
   }
   async getStats({ userID }) {
-    const stats = await this.mongoDB.getStatsByUserId(this.collection, userID);
+    const stats = await this.mongoDB.getByQuery(this.collection, {
+      firebase_id: userID,
+    });
     return stats;
   }
   async getStatsByWeek({ userID }) {

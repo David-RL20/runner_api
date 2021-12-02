@@ -9,8 +9,8 @@ class UsersService {
     const users = await this.mongoDB.getAll(this.collection);
     return users;
   }
-  async getUser({ userID }) {
-    const user = await this.mongoDB.get(this.collection, userID);
+  async getUser(query) {
+    const user = await this.mongoDB.getByQuery(this.collection, query);
     return user;
   }
   async validateUser({ email, password }) {

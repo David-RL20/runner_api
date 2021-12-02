@@ -66,16 +66,16 @@ function StatsApi(app) {
         userID: req.headers.user_id,
       };
       const stats = await statsService.getStats(params);
-      let current_week = moment.tz("America/Los_Angeles").format("w");
-
-      const filter_stats = stats.stats.filter((ele) => {
-        let ele_week = moment(ele.time).format("w");
-        if (ele_week == current_week) {
-          return ele;
-        }
-      });
 
       if (stats) {
+        let current_week = moment.tz("America/Los_Angeles").format("w");
+
+        const filter_stats = stats.stats.filter((ele) => {
+          let ele_week = moment(ele.time).format("w");
+          if (ele_week == current_week) {
+            return ele;
+          }
+        });
         res.status(200).json({
           status: "0",
           stats: filter_stats,
@@ -83,7 +83,7 @@ function StatsApi(app) {
       } else {
         res.status(404).json({
           status: "4",
-          msg: "record not found",
+          msg: `user ${params.userID} doesn't have stats registered`,
         });
       }
     } catch (error) {
@@ -216,8 +216,9 @@ function StatsApi(app) {
         });
       }
       const query_params = {
-        userID: req.headers.user_id,
+        firebase_id: req.headers.user_id,
       };
+
       //get user
       const user = await usersService.getUser(query_params);
 
@@ -264,7 +265,7 @@ function StatsApi(app) {
         });
       } else {
         let new_stat = {
-          user_id: req.headers.user_id,
+          firebase_id: req.headers.user_id,
           stats: [req.body],
         };
         const res_mongo = await statsService.createStats(new_stat);
