@@ -252,6 +252,7 @@ function StatsApi(app) {
         console.log(stats);
         const update_params = {
           _id: stats._id.toString(),
+          firebase_id: stats.firebase_id || req.headers.user_id,
           stats: {
             ...stats,
           },
