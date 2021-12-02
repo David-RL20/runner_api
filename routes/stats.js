@@ -29,8 +29,8 @@ function StatsApi(app) {
       if (stats) {
         res.status(200).json({
           status: "0",
-          user_id: data.user_id,
-          stats: data.stats,
+          user_id: stats.user_id,
+          stats: stats.stats,
         });
       } else {
         res.status(404).json({
