@@ -317,9 +317,9 @@ function StatsApi(app) {
       };
       //get user stats
       let stats = await statsService.getStats(query_params);
-      let updated_stat = stats.stats[stats.stats.length - 1];
 
       if (stats && !updated_stat.route.end) {
+        let updated_stat = stats.stats[stats.stats.length - 1];
         const distance = geolib.getDistance(
           {
             latitude: updated_stat.route.start.latitude,
