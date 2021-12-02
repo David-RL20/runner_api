@@ -1,11 +1,13 @@
 const express = require("express");
 const moment = require("moment-timezone");
-const { StatsService, TokensService } = require("../services");
+const geolib = require("geolib");
+const { StatsService, TokensService, UsersService } = require("../services");
 
 function StatsApi(app) {
   const router = express.Router();
   const statsService = new StatsService();
   const tokensService = new TokensService();
+  const usersService = new UsersService();
   app.use("/api/stats/", router);
 
   //Get the list of all the stats from a user
@@ -180,6 +182,191 @@ function StatsApi(app) {
             msg: "Internal Server Error",
           });
         }
+      }
+    } catch (error) {
+      res.status(404).json({
+        status: "5",
+        msg: error.toString(),
+      });
+    }
+  });
+
+  //Register the start of a run
+  //user_id as header
+  //Received token as header
+  router.post("/start", async (req, res, next) => {
+    try {
+      if (!req.body) {
+        res.status(500).json({
+          status: "10",
+          msg: "This enpoint should received a body msg",
+        });
+      }
+      if (!req.body.latitude || !req.body.longitude) {
+        res.status(500).json({
+          status: "10",
+          msg: "Missing parameters (latitude and longitude)",
+        });
+      }
+
+      if (!req.headers.user_id) {
+        res.status(404).json({
+          status: "1",
+          msg: "Missing Parameters (user_id)",
+        });
+      }
+      const query_params = {
+        userID: req.headers.user_id,
+      };
+      //get user
+      const user = await usersService.getUser(query_params);
+
+      if (!user) {
+        res.status(500).json({
+          status: "10",
+          msg: "User does not exist",
+        });
+      }
+      //get user stats
+      let stats = await statsService.getStats(query_params);
+
+      if (stats) {
+        stats.stats.push({
+          session: stats.stats.length + 1,
+          time: moment.now(),
+          distance: null,
+          speed: null,
+          route: {
+            start: {
+              latitude: req.body.latitude,
+              longitude: req.body.longitude,
+              time: moment.now(),
+            },
+          },
+          register_date: user.register_date,
+          running_avg_session: null,
+          time_running_avg_session: null,
+          share: true,
+        });
+        console.log(stats);
+        const update_params = {
+          _id: stats._id.toString(),
+          stats: {
+            ...stats,
+          },
+        };
+        //remove _id to avoid errors
+        delete stats._id;
+        const a = await statsService.updateStats(update_params);
+        res.status(200).json({
+          status: "0",
+          msg: "Stat added succesfully",
+        });
+      } else {
+        let new_stat = {
+          user_id: req.headers.user_id,
+          stats: [req.body],
+        };
+        const res_mongo = await statsService.createStats(new_stat);
+        if (res_mongo) {
+          res.status(200).json({
+            status: "0",
+            msg: "New stat added succesfully",
+          });
+        } else {
+          res.status(500).json({
+            status: "5",
+            msg: "Internal Server Error",
+          });
+        }
+      }
+    } catch (error) {
+      res.status(404).json({
+        status: "5",
+        msg: error.toString(),
+      });
+    }
+  });
+  //Register the start of a run
+  //user_id as header
+  //Received token as header
+  router.post("/end", async (req, res, next) => {
+    try {
+      if (!req.body) {
+        res.status(500).json({
+          status: "10",
+          msg: "This enpoint should received a body msg",
+        });
+      }
+      if (!req.body.latitude || !req.body.longitude) {
+        res.status(500).json({
+          status: "10",
+          msg: "Missing parameters (latitude and longitude)",
+        });
+      }
+
+      if (!req.headers.user_id) {
+        res.status(404).json({
+          status: "1",
+          msg: "Missing Parameters (user_id)",
+        });
+      }
+      const query_params = {
+        userID: req.headers.user_id,
+      };
+      //get user stats
+      let stats = await statsService.getStats(query_params);
+      let updated_stat = stats.stats[stats.stats.length - 1];
+
+      if (stats && !updated_stat.route.end) {
+        const distance = geolib.getDistance(
+          {
+            latitude: updated_stat.route.start.latitude,
+            longitude: updated_stat.route.start.longitude,
+          },
+          { latitude: req.body.latitude, longitude: req.body.longitude }
+        );
+        const speed = geolib.getSpeed(
+          {
+            latitude: updated_stat.route.start.latitude,
+            longitude: updated_stat.route.start.longitude,
+            time: updated_stat.route.start.time,
+          },
+          {
+            latitude: req.body.latitude,
+            longitude: req.body.longitude,
+            time: moment.now(),
+          }
+        );
+        updated_stat.speed = geolib.convertSpeed(speed, "kmh");
+        updated_stat.distance = geolib.convertDistance(distance, "km");
+        updated_stat.route.end = {
+          latitude: req.body.latitude,
+          longitude: req.body.longitude,
+          time: moment.now(),
+        };
+        stats.stats.pop();
+        stats.stats.push(updated_stat);
+
+        console.log(stats);
+        const update_params = {
+          _id: stats._id.toString(),
+          stats: {
+            ...stats,
+          },
+        };
+        //remove _id to avoid errors
+        delete stats._id;
+        await statsService.updateStats(update_params);
+        res.status(200).json({
+          status: "0",
+          msg: "Stat added succesfully",
+        });
+      } else {
+        res.status(500).json({
+          status: "502",
+          msg: "Record not found to update",
+        });
       }
     } catch (error) {
       res.status(404).json({
